@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: healthvault-admin:dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app           # Mount local code to container
+      - /app/node_modules # Prevent overwriting node_modules
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"

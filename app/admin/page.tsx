@@ -3,28 +3,40 @@
 import { useState } from "react";
 import { Stethoscope, FileText, CheckCircle, XCircle } from "lucide-react";
 
+type ReportStatus = "pending" | "approved" | "rejected";
+
+type Report = {
+  id: number;
+  name: string;
+  status: ReportStatus;
+  date: string;
+};
+
 export default function AdminReportsPage() {
-  const [reports, setReports] = useState([
+  const [reports, setReports] = useState<Report[]>([
     { id: 1, name: "Blood Test - John Doe", status: "pending", date: "2025-01-01" },
     { id: 2, name: "X-Ray - Jane Smith", status: "pending", date: "2025-01-01" },
     { id: 3, name: "ECG - Michael Brown", status: "pending", date: "2025-01-02" },
   ]);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
-  const [selectedAction, setSelectedAction] = useState(null);
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedAction, setSelectedAction] = useState<ReportStatus | null>(null);
 
-  const openModal = (id, action) => {
+  const openModal = (id: number, action: ReportStatus) => {
     setSelectedId(id);
     setSelectedAction(action);
     setModalOpen(true);
   };
 
-  const updateStatus = (id, newStatus) => {
-    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r)));
+  const updateStatus = (id: number, newStatus: ReportStatus) => {
+    setReports((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r))
+    );
   };
 
   const confirmAction = () => {
+    if (selectedId === null || selectedAction === null) return;
     updateStatus(selectedId, selectedAction);
     setModalOpen(false);
   };
@@ -35,14 +47,14 @@ export default function AdminReportsPage() {
     setSelectedAction(null);
   };
 
-  const visibleReports = reports;
-
   async function handleLogout() {
     try {
       await fetch("/api/logout", { method: "POST" });
-    } catch (e) {}
+    } catch {}
     window.location.href = "/login";
   }
+
+  const visibleReports = reports;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8 flex justify-center">
@@ -154,7 +166,7 @@ export default function AdminReportsPage() {
             <h2 className="text-xl font-bold text-blue-700 mb-4">Confirm Action</h2>
 
             <p className="text-gray-700 mb-6">
-              Are you sure you want to mark this report as
+              Are you sure you want to mark this report as 
               <span className="font-semibold text-blue-700"> {selectedAction}</span>?
             </p>
 

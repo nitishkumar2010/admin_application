@@ -1,0 +1,20 @@
+# Stage 0: Base Node Image
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies first (cacheable)
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Copy all app files
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Set env variable for polling to detect changes in mounted volumes
+ENV CHOKIDAR_USEPOLLING=true
+
+# Start Next.js dev server
+CMD ["npm", "run", "dev"]
