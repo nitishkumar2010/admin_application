@@ -5,21 +5,23 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy dependency files first (for caching)
+# Copy dependency files first (cache)
 COPY package.json package-lock.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy application source code
+# Copy source
 COPY . .
 
-# Build-time environment variables (dummy)
 # Required for Next.js build
 ENV NEXTAUTH_SECRET="dummy-secret"
 ENV NEXTAUTH_URL="http://localhost:3000"
 
-# Build Next.js app
+# 🔥 CRITICAL: Generate Prisma client
+RUN npx prisma generate
+
+# Build Next.js
 RUN npm run build
 
 
@@ -38,6 +40,7 @@ COPY --from=builder /app/package-lock.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 3000
 
