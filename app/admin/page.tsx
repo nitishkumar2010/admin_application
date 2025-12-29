@@ -260,7 +260,7 @@ export default function AdminReportsPage() {
               Confirm Action
             </h2>
             <p className="mb-6 text-gray-700">
-              Are you sure you want to mark this report as{" "}
+              Are you sure you want to mark this report as test {" "}
               <span className="font-semibold">{selectedAction}</span>?
             </p>
 

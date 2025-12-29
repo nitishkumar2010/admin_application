@@ -1,13 +1,26 @@
 version: "3.9"
 
 services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: healthvault
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   admin:
-    container_name: healthvault-admin
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      NODE_ENV: production
-    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
