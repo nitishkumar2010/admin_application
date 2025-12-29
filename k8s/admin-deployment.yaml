@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin
+  template:
+    metadata:
+      labels:
+        app: admin
+    spec:
+      initContainers:
+        - name: prisma-migrate
+          image: healthvault-admin:1.0
+          command: ["npx", "prisma", "migrate", "deploy"]
+          envFrom:
+            - configMapRef:
+                name: admin-config
+
+      containers:
+        - name: admin
+          image: healthvault-admin:1.0
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: admin-config
