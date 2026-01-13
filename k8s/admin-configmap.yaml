@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: admin-config
+  namespace: healthvault
 data:
-  DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/healthvault"
-  NEXTAUTH_URL: "http://localhost:3000"
-  NEXTAUTH_SECRET: "dummy-secret"
+  NODE_ENV: production
+  NEXTAUTH_URL: http://localhost:3000
