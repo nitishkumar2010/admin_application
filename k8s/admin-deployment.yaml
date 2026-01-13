@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: admin
+  namespace: healthvault
 spec:
   replicas: 1
   selector:
@@ -12,19 +13,31 @@ spec:
       labels:
         app: admin
     spec:
-      initContainers:
-        - name: prisma-migrate
-          image: healthvault-admin:1.0
-          command: ["npx", "prisma", "migrate", "deploy"]
-          envFrom:
-            - configMapRef:
-                name: admin-config
-
       containers:
         - name: admin
           image: healthvault-admin:1.0
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+
           envFrom:
             - configMapRef:
                 name: admin-config
+            - secretRef:
+                name: admin-secrets
