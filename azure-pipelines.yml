@@ -14,14 +14,16 @@ pool:
 steps:
 - script: |
     set -e
-
+    echo "Setting up SSH..."
     mkdir -p ~/.ssh
-
     printf "%s\n" "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
     chmod 600 ~/.ssh/id_ed25519
-
     ssh-keyscan -H $(VM_IP) >> ~/.ssh/known_hosts
+    echo "Testing connection..."
+    ssh -i ~/.ssh/id_ed25519 \
+        -o StrictHostKeyChecking=yes \
+        $(VM_USER)@$(VM_IP) "echo CONNECTED && hostname"
 
-    ssh -o StrictHostKeyChecking=yes $(VM_USER)@$(VM_IP) "echo CONNECTED && hostname"
   displayName: Test SSH From Pipeline
+
 
