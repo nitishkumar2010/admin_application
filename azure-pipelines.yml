@@ -3,28 +3,85 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-trigger: none
+trigger:
+  branches:
+    include:
+      - main
 
 variables:
+- group: docker-ssh-secrets
 - group: vm-ssh-secrets
 
 pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: |
-    set -e
 
-    mkdir -p ~/.ssh
+# ===============================
+# 1. Build Docker Image
+# ===============================
+- task: Bash@3
+  displayName: Build Docker Image
+  inputs:
+    targetType: inline
+    script: |
+      docker build -t $(DOCKER_USER)/healthvault-admin:latest .
 
-    echo "$(SSH_PRIVATE_KEY_B64)" | base64 -d > ~/.ssh/id_ed25519
-    chmod 600 ~/.ssh/id_ed25519
+# ===============================
+# 2. Login to Docker Hub
+# ===============================
+- task: Bash@3
+  displayName: Docker Login
+  inputs:
+    targetType: inline
+    script: |
+      echo "$(DOCKER_PASS)" | docker login \
+        -u "$(DOCKER_USER)" \
+        --password-stdin
 
-    wc -l ~/.ssh/id_ed25519
+# ===============================
+# 3. Push Image
+# ===============================
+- task: Bash@3
+  displayName: Push Image
+  inputs:
+    targetType: inline
+    script: |
+      docker push $(DOCKER_USER)/healthvault-admin:latest
 
-    ssh-keyscan -H $(VM_IP) >> ~/.ssh/known_hosts
+# # ===============================
+# # 4. Setup SSH
+# # ===============================
+# - task: Bash@3
+#   displayName: Setup SSH
+#   inputs:
+#     targetType: inline
+#     script: |
+#       mkdir -p ~/.ssh
+#       echo "$(SSH_KEY)" > ~/.ssh/id_ed25519
+#       chmod 600 ~/.ssh/id_ed25519
 
-    ssh -i ~/.ssh/id_ed25519 \
-        $(VM_USER)@$(VM_IP) \
-        "echo CONNECTED && hostname"
+#       ssh-keyscan -H 20.193.132.121 >> ~/.ssh/known_hosts
+
+# # ===============================
+# # 5. Deploy to Kubernetes
+# # ===============================
+# - task: Bash@3
+#   displayName: Deploy to K8s
+#   inputs:
+#     targetType: inline
+#     script: |
+#       ssh nikumar@20.193.132.121 << EOF
+
+#       cd ~/deploy
+
+#       microk8s kubectl apply -f .
+
+#       microk8s kubectl rollout restart deployment admin -n nitishk21
+
+#       microk8s kubectl get pods -n nitishk21
+
+#       EOF
+
+
 
