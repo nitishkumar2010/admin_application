@@ -16,8 +16,8 @@ steps:
 - script: |
     echo "VM_IP=$VM_IP"
     echo "VM_USER=$VM_USER"
-
-    if [ -z "$SSH_PRIVATE_KEY_B64" ]; then
+    echo "Key=$(SSH_PRIVATE_KEY_B64)"
+    if [ -z "$(SSH_PRIVATE_KEY_B64)" ]; then
       echo "❌ KEY EMPTY"
     else
       echo "✅ KEY PRESENT"
