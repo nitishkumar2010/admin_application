@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: admin-config
-  namespace: healthvault
+  namespace: nitishk21
 data:
   NODE_ENV: production
   NEXTAUTH_URL: http://localhost:3000

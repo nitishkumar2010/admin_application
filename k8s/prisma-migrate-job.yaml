@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: prisma-migrate
-  namespace: healthvault
+  namespace: nitishk21
 spec:
   backoffLimit: 3
   template:
@@ -10,7 +10,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: prisma-migrate
-          image: healthvault-admin:1.0
+          image: nitishk21/my-app:latest
           command: ["npx", "prisma", "migrate", "deploy"]
           envFrom:
             - secretRef:
