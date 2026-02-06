@@ -12,25 +12,15 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+
 - script: |
-    set -e
+    echo "VM_IP=$VM_IP"
+    echo "VM_USER=$VM_USER"
 
-    echo "Setting up SSH..."
-
-    mkdir -p ~/.ssh
-
-    echo "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/id_ed25519
-    chmod 600 ~/.ssh/id_ed25519
-
-    ssh-keyscan -H $(VM_IP) >> ~/.ssh/known_hosts
-
-    echo "Key lines:"
-    wc -l ~/.ssh/id_ed25519
-
-    echo "Testing connection..."
-
-    ssh -i ~/.ssh/id_ed25519 \
-        $(VM_USER)@$(VM_IP) \
-        "echo CONNECTED && hostname"
-
-  displayName: Test SSH From Pipeline
+    if [ -z "$SSH_PRIVATE_KEY_B64" ]; then
+      echo "❌ KEY EMPTY"
+    else
+      echo "✅ KEY PRESENT"
+      echo "Length: ${#SSH_PRIVATE_KEY_B64}"
+    fi
+  displayName: Debug Variables
