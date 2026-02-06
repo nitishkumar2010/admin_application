@@ -15,22 +15,22 @@ steps:
 - script: |
     set -e
 
+    echo "Setting up SSH..."
+
     mkdir -p ~/.ssh
 
-    echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    echo "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/id_ed25519
     chmod 600 ~/.ssh/id_ed25519
 
     ssh-keyscan -H $(VM_IP) >> ~/.ssh/known_hosts
 
+    echo "Key lines:"
     wc -l ~/.ssh/id_ed25519
-    head -1 ~/.ssh/id_ed25519
-    tail -1 ~/.ssh/id_ed25519
+
+    echo "Testing connection..."
 
     ssh -i ~/.ssh/id_ed25519 \
         $(VM_USER)@$(VM_IP) \
         "echo CONNECTED && hostname"
 
   displayName: Test SSH From Pipeline
-
-
-
