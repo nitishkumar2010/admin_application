@@ -3,17 +3,22 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-trigger:
-- master
+trigger: none
+
+variables:
+- group: vm-ssh-secrets
 
 pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
 - script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+    mkdir -p ~/.ssh
+    echo "$(SSH_PRIVATE_KEY)" > ~/.ssh/id_ed25519
+    chmod 600 ~/.ssh/id_ed25519
+
+    ssh-keyscan $(VM_IP) >> ~/.ssh/known_hosts
+
+    ssh $(VM_USER)@$(VM_IP) "echo CONNECTED && hostname"
+  displayName: Test SSH From Pipeline
+
