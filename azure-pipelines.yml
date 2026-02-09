@@ -70,7 +70,7 @@ steps:
     script: |
       echo "Pushing image..."
 
-      docker push $(DOCKER_USER)/healthvault-admin:latest
+      docker push $(DOCKER_USER)/healthvault-admin:$(IMAGE_TAG)
 
 
 # ===============================
