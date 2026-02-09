@@ -16,6 +16,9 @@ variables:
 - name: IMAGE_TAG
   value: $(Build.BuildId)
 
+- name: IMAGE_NAME
+  value: $(DOCKER_USER)/healthvault-admin
+
 # ===============================
 # Agent
 # ===============================
@@ -42,7 +45,7 @@ steps:
       echo "Building Docker image..."
 
       docker build \
-        -t $(DOCKER_USER)/healthvault-admin:$(IMAGE_TAG) .
+        -t $(IMAGE_NAME):$(IMAGE_TAG) .
 
 
 # ===============================
@@ -70,7 +73,7 @@ steps:
     script: |
       echo "Pushing image..."
 
-      docker push $(DOCKER_USER)/healthvault-admin:$(IMAGE_TAG)
+      docker push $(IMAGE_NAME):$(IMAGE_TAG)
 
 
 # ===============================
@@ -118,18 +121,23 @@ steps:
     script: |
       echo "Deploying to K8s..."
 
-      ssh $(VM_USER)@$(VM_IP) << 'EOF'
+      ssh $(VM_USER)@$(VM_IP) << EOF
 
       set -e
 
-      cd ~/deploy/k8s
+      echo "Updating image to: $(IMAGE_NAME):$(IMAGE_TAG)"
 
-      microk8s kubectl apply -f .
+      # Update image directly
+      microk8s kubectl set image deployment/admin \
+        admin=$(IMAGE_NAME):$(IMAGE_TAG) \
+        -n nitishk21
 
-      microk8s kubectl rollout restart deployment admin -n nitishk21
-
-      microk8s kubectl get pods -n nitishk21
-
+      # Wait for rollout
       microk8s kubectl rollout status deployment admin -n nitishk21
 
+      # Show running image (verification)
+      microk8s kubectl get pods -n nitishk21 \
+        -o=jsonpath='{.items[*].spec.containers[*].image}'
+
       EOF
+
