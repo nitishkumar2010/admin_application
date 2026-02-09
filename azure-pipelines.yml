@@ -1,0 +1,130 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr: none
+
+# ===============================
+# Variable Groups
+# ===============================
+variables:
+- group: docker-secrets        # DOCKER_USER, DOCKER_PASS
+- group: vm-ssh-secrets        # VM_IP, VM_USER, SSH_PRIVATE_KEY_B64
+
+
+# ===============================
+# Agent
+# ===============================
+pool:
+  vmImage: ubuntu-latest
+
+
+steps:
+
+# ===============================
+# 1. Checkout Code
+# ===============================
+- checkout: self
+
+
+# ===============================
+# 2. Build Docker Image
+# ===============================
+- task: Bash@3
+  displayName: Build Docker Image
+  inputs:
+    targetType: inline
+    script: |
+      echo "Building Docker image..."
+
+      docker build \
+        -t $(DOCKER_USER)/healthvault-admin:latest .
+
+
+# ===============================
+# 3. Docker Login
+# ===============================
+- task: Bash@3
+  displayName: Docker Login
+  inputs:
+    targetType: inline
+    script: |
+      echo "Logging into Docker Hub..."
+
+      echo "$(DOCKER_PASS)" | docker login \
+        -u "$(DOCKER_USER)" \
+        --password-stdin
+
+
+# ===============================
+# 4. Push Image
+# ===============================
+- task: Bash@3
+  displayName: Push Image
+  inputs:
+    targetType: inline
+    script: |
+      echo "Pushing image..."
+
+      docker push $(DOCKER_USER)/healthvault-admin:latest
+
+
+# ===============================
+# 5. Setup SSH (From Base64 Key)
+# ===============================
+- task: Bash@3
+  displayName: Setup SSH
+  inputs:
+    targetType: inline
+    script: |
+      echo "Setting up SSH..."
+
+      mkdir -p ~/.ssh
+
+      # Decode Base64 key
+      echo "$(SSH_PRIVATE_KEY_B64)" | base64 -d > ~/.ssh/id_ed25519
+
+      chmod 600 ~/.ssh/id_ed25519
+
+      # Add VM to known_hosts
+      ssh-keyscan -H $(VM_IP) >> ~/.ssh/known_hosts
+
+
+# ===============================
+# 6. Copy K8s Files to VM
+# ===============================
+- task: Bash@3
+  displayName: Copy K8s Manifests
+  inputs:
+    targetType: inline
+    script: |
+      echo "Copying K8s files..."
+
+      scp -r k8s \
+        $(VM_USER)@$(VM_IP):/home/$(VM_USER)/deploy
+
+
+# ===============================
+# 7. Deploy to MicroK8s
+# ===============================
+- task: Bash@3
+  displayName: Deploy to Kubernetes
+  inputs:
+    targetType: inline
+    script: |
+      echo "Deploying to K8s..."
+
+      ssh $(VM_USER)@$(VM_IP) << 'EOF'
+
+      set -e
+
+      cd ~/deploy/k8s
+
+      microk8s kubectl apply -f .
+
+      microk8s kubectl rollout restart deployment admin -n nitishk21
+
+      microk8s kubectl get pods -n nitishk21
+
+      EOF
