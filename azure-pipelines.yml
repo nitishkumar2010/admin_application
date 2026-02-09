@@ -13,6 +13,8 @@ variables:
 - group: docker-secrets        # DOCKER_USER, DOCKER_PASS
 - group: vm-ssh-secrets        # VM_IP, VM_USER, SSH_PRIVATE_KEY_B64
 
+- name: IMAGE_TAG
+  value: $(Build.BuildId)
 
 # ===============================
 # Agent
@@ -40,7 +42,7 @@ steps:
       echo "Building Docker image..."
 
       docker build \
-        -t $(DOCKER_USER)/healthvault-admin:latest .
+        -t $(DOCKER_USER)/healthvault-admin:$(IMAGE_TAG) .
 
 
 # ===============================
@@ -127,5 +129,7 @@ steps:
       microk8s kubectl rollout restart deployment admin -n nitishk21
 
       microk8s kubectl get pods -n nitishk21
+
+      microk8s kubectl rollout status deployment admin -n nitishk21
 
       EOF
