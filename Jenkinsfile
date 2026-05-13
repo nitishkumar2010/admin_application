@@ -8,6 +8,10 @@ pipeline {
     }
 
     environment {
+        // Jenkins on macOS doesn't inherit the shell's PATH, so node/npm from
+        // Homebrew aren't found. Prepend Homebrew + /usr/local/bin so node,
+        // npm, npx, curl, and lsof all resolve.
+        PATH          = "/opt/homebrew/bin:/usr/local/bin:${env.PATH}"
         CI            = 'true'
         NEXT_TELEMETRY_DISABLED = '1'
         APP_DIR       = "${WORKSPACE}"
