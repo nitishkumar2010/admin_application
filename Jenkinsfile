@@ -94,15 +94,18 @@ pipeline {
 
         stage('Start dev server') {
             steps {
-                // Subshell + nohup + disown detaches the dev server from the Jenkins
-                // shell's process group so the stage can finish without killing it.
-                // Works on both macOS and Linux (avoids `setsid`, which is Linux-only).
-                // We call `npx next dev` directly because the npm "dev" script already
-                // hardcodes `-p 3000`, which would cause a duplicated `-p` flag.
+                // JENKINS_NODE_COOKIE=dontKillMe disables Jenkins' ProcessTreeKiller
+                // for this child process — otherwise Jenkins reaps the dev server
+                // when the build ends (nohup/disown don't help, the kill is driven
+                // by env-var matching, not process-group membership).
+                // Subshell + nohup + disown still helps cleanly detach the process.
+                // We call `npx next dev` directly because the npm "dev" script
+                // already hardcodes `-p 3000`, which would cause a duplicated `-p`.
                 sh '''
                     echo "Starting next dev on port ${PORT}..."
                     (
-                      nohup npx next dev -p ${PORT} > "$LOG_FILE" 2>&1 &
+                      JENKINS_NODE_COOKIE=dontKillMe BUILD_ID=dontKillMe \
+                        nohup npx next dev -p ${PORT} > "$LOG_FILE" 2>&1 &
                       echo $! > "$PID_FILE"
                       disown
                     ) 2>/dev/null
